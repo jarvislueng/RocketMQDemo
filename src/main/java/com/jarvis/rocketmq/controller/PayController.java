@@ -4,6 +4,7 @@ import com.jarvis.rocketmq.jms.JMSConfig;
 import com.jarvis.rocketmq.jms.PayProducer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.exception.RemotingException;
@@ -29,8 +30,48 @@ public class PayController {
 
     @RequestMapping("/api/v1/pay_cub")
     public Object callback() throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
-        Message message = new Message(JMSConfig.TOPIC, "a", "hello jarvis".getBytes());
-        SendResult sendResult = payProducer.getProducer().send(message);
+        //key的话相当于id
+        Message message = new Message(JMSConfig.TOPIC, "a", "hello jarvis22".getBytes());
+        message.setDelayTimeLevel(2);
+//        SendResult sendResult = payProducer.getProducer().send(message);//同步发送
+
+        //里边的arg对应的是外层的arg
+        SendResult sendResult = payProducer.getProducer().send(message, (mqs, msg, arg)->{
+//            Integer queueNumber = (Integer) arg;
+            Integer queueNum = Integer.parseInt(arg.toString());
+            return mqs.get(queueNum);
+        }, 0);
+
+
+
+        payProducer.getProducer().send(message, (mqs, msg, arg) -> {
+//            Integer queueNumber = (Integer) arg;
+            Integer queueNum = Integer.parseInt(arg.toString());
+            return mqs.get(queueNum);
+        }, 3, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                System.out.printf("异步发送：%s  \n", sendResult);
+            }
+
+            @Override
+            public void onException(Throwable e) {
+
+            }
+        });
+        /*//异步发送
+        payProducer.getProducer().send(message, new SendCallback(){
+
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                System.out.println(sendResult);
+            }
+
+            @Override
+            public void onException(Throwable e) {
+
+            }
+        });*/
         logger.info("sendResult,{}", sendResult);
         return sendResult;
     }

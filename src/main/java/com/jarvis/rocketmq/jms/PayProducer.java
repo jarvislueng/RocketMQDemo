@@ -22,6 +22,7 @@ public class PayProducer {
         //多节点、集群用;分隔
         defaultMQProducer.setNamesrvAddr(JMSConfig.NAME_SERVER);
 
+
         this.start();
     }
 
@@ -30,6 +31,7 @@ public class PayProducer {
      * */
     public void start(){
         try {
+            this.defaultMQProducer.setVipChannelEnabled(false);
             this.defaultMQProducer.start();
         } catch (MQClientException e) {
             e.printStackTrace();
